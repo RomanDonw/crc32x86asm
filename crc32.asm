@@ -19,6 +19,10 @@ readfileerror__rawstring:
     .start db "Reading file error.", 10
     .end:
 
+hexprefix__rawstring:
+    .start db "0x"
+    .end:
+
 section .text
 
 %define BUFFER_SIZE 4096
@@ -104,8 +108,13 @@ section .text
     mov rax, 3
     syscall
 
-    mov eax, r8d
     mov rdi, 1
+    lea rsi, [hexprefix__rawstring.start]
+    mov rdx, hexprefix__rawstring.end - hexprefix__rawstring.start
+    mov rax, rdi
+    syscall
+
+    mov eax, r8d
     call writelinex32
 
     .quit:
