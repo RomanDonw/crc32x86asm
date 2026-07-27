@@ -104,29 +104,6 @@ main:
     mov rsi, r8
     call printf
 
-    jmp .quit
-
-    sub rsp, 16
-        mov rdi, rbx
-        lea rsi, [scanffmt__string]
-        mov rdx, rsp
-        call sscanf
-        mov rbx, [rsp]
-    add rsp, 16
-    cmp eax, 1 ; checks strictly on 1 because if use 'test' -1 also passed as correct result.
-    jz .successreadval
-        lea rdi, [failedreadval__string]
-        call puts
-    jmp .errorquit
-    .successreadval:
-    
-    xor rdx, rdx
-    crc32 rdx, rbx
-
-    lea rdi, [printCRC32resultfmt__string]
-    mov rsi, rbx
-    call printf
-
     .quit:
     pop rbx
     xor rax, rax
