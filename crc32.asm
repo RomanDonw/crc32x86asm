@@ -1,14 +1,7 @@
 default rel
-global main
+global @start
 
 section .rodata
-
-unsuppsse42__string db "SSE 4.2 extension doesn't supported by this CPU.", 0
-scanffmt__string db "%llu", 0
-printCRC32resultfmt__string db "'crc32' instruction result of %llu is 0x%llX.", 10, 0
-failedreadval__string db "Failed to parse value.", 0
-usage__string db "Usage:", 10, "    ./crc32 <unsigned 64-bit integer for CRC32 calculation>", 0
-printf__string db "%llX", 10, 0
 
 unableopenfile__rawstring:
     .start db "Unable to specified open file.", 10
@@ -23,15 +16,10 @@ unsuppsse42__rawstring:
     .end:
 
 section .text
-    extern printf
-    extern puts
-    extern sscanf
 
 %define BUFFER_SIZE 4096
 
-main:
-    push rbx
-
+@start:
     ; check is SSE 4.2 supported through CPUID instruction.
     mov eax, 1
     cpuid
@@ -44,6 +32,9 @@ main:
         syscall
     jmp .errorquit
     .sse42supported:
+
+    pop rdi
+    mov rsi, rsp
 
     cmp edi, 2
     jae .hasminreqargcount
@@ -100,16 +91,16 @@ main:
     mov rax, 3
     syscall
 
-    lea rdi, [printf__string]
-    mov rsi, r8
-    call printf
-
     .quit:
-    pop rbx
-    xor rax, rax
-    ret
+    xor eax, eax
+    call exit
 
     .errorquit:
-    pop rbx
-    mov rax, 1
-    ret
+    mov eax, 1
+    call exit
+
+; EAX - error code.
+exit:
+   movsx rdi, eax
+   mov rax, 3Ch
+   syscall
