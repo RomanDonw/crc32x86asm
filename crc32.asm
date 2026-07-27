@@ -8,7 +8,7 @@ unableopenfile__rawstring:
     .end:
 
 usage__rawstring:
-    .start db "Usage:", 10, "    ./crc32 <unsigned 64-bit integer for CRC32 calculation>", 10
+    .start db "Usage:", 10, "    ./crc32 <path to file for hardware CRC32 calculation>", 10
     .end:
 
 unsuppsse42__rawstring:
