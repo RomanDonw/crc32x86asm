@@ -15,6 +15,10 @@ unsuppsse42__rawstring:
     .start db "SSE 4.2 extension doesn't supported by this CPU.", 10
     .end:
 
+readfileerror__rawstring:
+    .start db "Reading file error.", 10
+    .end:
+
 section .text
 
 %define BUFFER_SIZE 4096
@@ -71,13 +75,22 @@ section .text
     xor rax, rax
     syscall
     cmp rax, 0
-    jle .loop__end 
+    jg .loop_noreaderror
+    jz .loop__end
+        mov rax, 1
+        mov rdi, rax
+        lea rsi, [readfileerror__rawstring.start]
+        mov rdx, readfileerror__rawstring.end - readfileerror__rawstring.start
+        syscall
+    mov rsp, rbx
+    jmp .errorquit
+    .loop_noreaderror:
 
         xor rcx, rcx
         .loop2__start:
         cmp rcx, rax
         jae .loop2__end
-            crc32 r8, byte [rsi + rcx]
+            crc32 r8d, byte [rsi + rcx]
         inc rcx
         jmp .loop2__start
         .loop2__end:
@@ -90,6 +103,10 @@ section .text
     mov rdi, rax
     mov rax, 3
     syscall
+
+    mov eax, r8d
+    mov rdi, 1
+    call writelinex32
 
     .quit:
     xor eax, eax
@@ -104,3 +121,54 @@ exit:
    movsx rdi, eax
    mov rax, 3Ch
    syscall
+
+; EAX - value.
+; RDI - descriptor.
+writelinex32:
+    push rax
+    push rsi
+    push rcx
+    push rdx
+    push r11
+    push bx
+    dec rsp
+    
+    mov rdx, 1
+    mov rsi, rsp
+    xor bl, bl
+    .loop__start:
+    cmp bl, 8
+    jae .loop__end
+    
+        push rax
+            shr eax, 28
+    
+            cmp al, 10
+            jb .usedigits
+                add al, 7
+            .usedigits:
+            add al, 30h
+    
+            mov byte [rsi], al
+            mov rax, rdx
+            syscall
+        pop rax
+
+    shl eax, 4
+    inc bl
+    jmp .loop__start
+    .loop__end:
+
+    mov byte [rsp], 10
+    mov rax, rdx
+    syscall
+
+    inc rsp
+    pop bx
+    pop r11
+    pop rdx
+    pop rcx
+    pop rsi
+    pop rax
+
+    ret
