@@ -23,6 +23,10 @@ hexprefix__rawstring:
     .start db "0x"
     .end:
 
+fsobjisdir__rawstring:
+    .start db "File system object by specified path is directory.", 10
+    .end:
+
 section .text
 
 BUFFER_SIZE equ 4096
@@ -68,6 +72,9 @@ AT_FDCWD equ -100
     syscall
     cmp rax, 0
     jge .successopen
+        cmp rax, -21
+        jz .fsobjisdir
+
         mov rax, 1
         mov rdi, rax
         lea rsi, [unableopenfile__rawstring.start]
@@ -87,12 +94,21 @@ AT_FDCWD equ -100
     cmp rax, 0
     jg .loop_noreaderror
     jz .loop__end
+        mov rsp, rbx
+
+        push rax
+            mov rax, 3
+            syscall
+        pop rax
+
+        cmp rax, -21
+        jz .fsobjisdir
+
         mov rax, 1
         mov rdi, rax
         lea rsi, [readfileerror__rawstring.start]
         mov rdx, readfileerror__rawstring.end - readfileerror__rawstring.start
         syscall
-    mov rsp, rbx
     jmp .errorquit
     .loop_noreaderror:
 
@@ -123,6 +139,15 @@ AT_FDCWD equ -100
     mov eax, r10d
     call writelinex32
 
+    jmp .quit
+    .fsobjisdir:
+        xor r10d, r10d
+
+        mov rax, 1
+        mov rdi, rax
+        lea rsi, [fsobjisdir__rawstring.start]
+        mov rdx, fsobjisdir__rawstring.end - fsobjisdir__rawstring.start
+        syscall
     .quit:
     xor eax, eax
     call exit
