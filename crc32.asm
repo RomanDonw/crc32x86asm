@@ -25,7 +25,12 @@ hexprefix__rawstring:
 
 section .text
 
-%define BUFFER_SIZE 4096
+BUFFER_SIZE equ 4096
+
+O_RDONLY equ 0
+O_DIRECTORY equ 10000h
+
+AT_FDCWD equ -100
 
 @start:
     ; check is SSE 4.2 supported through CPUID instruction.
@@ -44,7 +49,7 @@ section .text
     pop rdi
     mov rsi, rsp
 
-    cmp edi, 2
+    cmp rdi, 2
     jae .hasminreqargcount
         mov rax, 1
         mov rdi, rax
@@ -54,10 +59,12 @@ section .text
     jmp .errorquit
     .hasminreqargcount:
 
-    mov rax, 2
-    mov rdi, [rsi + 8]
-    xor rsi, rsi
-    mov rdx, rsi
+    mov rax, 101h
+    mov rdi, AT_FDCWD
+    mov rsi, [rsi + 8]
+    ;mov rdx, O_RDONLY
+    xor rdx, rdx
+    xor r10, r10
     syscall
     cmp rax, 0
     jge .successopen
@@ -69,7 +76,6 @@ section .text
     jmp .errorquit
     .successopen:
     mov rdi, rax
-    mov r8, rsi
 
     mov rbx, rsp
     mov rdx, BUFFER_SIZE
@@ -94,7 +100,7 @@ section .text
         .loop2__start:
         cmp rcx, rax
         jae .loop2__end
-            crc32 r8d, byte [rsi + rcx]
+            crc32 r10d, byte [rsi + rcx]
         inc rcx
         jmp .loop2__start
         .loop2__end:
@@ -114,7 +120,7 @@ section .text
     mov rax, rdi
     syscall
 
-    mov eax, r8d
+    mov eax, r10d
     call writelinex32
 
     .quit:
