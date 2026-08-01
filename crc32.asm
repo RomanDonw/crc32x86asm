@@ -68,7 +68,7 @@ AT_FDCWD equ -100
     mov rsi, [rsi + 8]
     ;mov rdx, O_RDONLY
     xor rdx, rdx
-    xor r10, r10
+    mov r10, rdx
     syscall
     cmp rax, 0
     jge .successopen
@@ -141,8 +141,6 @@ AT_FDCWD equ -100
 
     jmp .quit
     .fsobjisdir:
-        xor r10d, r10d
-
         mov rax, 1
         mov rdi, rax
         lea rsi, [fsobjisdir__rawstring.start]
